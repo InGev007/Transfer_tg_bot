@@ -1,0 +1,11 @@
+version: "3.3"
+
+services:
+  english_bot:
+    build: ./
+    image: Transfer_tg_bot:latest
+    restart: always
+    volumes:
+      - ./db/:/usr/src/app/db/
+    environment:
+      - TOKEN_Transfer_tg_bot

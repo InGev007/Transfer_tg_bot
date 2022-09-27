@@ -1,0 +1,47 @@
+name: Deploy Main
+
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install OpenVPN
+        run: |
+          sudo apt-get update
+          sudo apt-get --assume-yes --no-install-recommends install openvpn
+          
+      - name: Setup VPN config
+        run: echo "${{ secrets.OVPN }}" > config.ovpn
+        
+      - name: Connect VPN
+        run: sudo openvpn --config "./config.ovpn" --log "vpn.log" --daemon
+
+      - name: Wait for a VPN connection
+        timeout-minutes: 0.5
+        run: until ping -c1 ${{ secrets.SERVER_IP }}; do sleep 5; done
+      
+      - name: multiple command
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_LOGIN }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ./docker/Transfer_tg_bot
+            docker-compose down
+            cp ./db/ /tmp -r 
+            cd ..
+            rm -rf ./Transfer_tg_bot
+            git clone https://github.com/InGev007/Transfer_tg_bot.git
+            cd ./Transfer_tg_bot
+            mv -t ~/docker/Transfer_tg_bot /tmp/db
+            export TOKEN_Transfer_tg_bot=${{ secrets.TOKEN_Transfer_tg_bot }}
+            docker-compose build
+            docker-compose up -d
