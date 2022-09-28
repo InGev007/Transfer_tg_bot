@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  english_bot:
+  Transfer_tg_bot:
     build: ./
     image: Transfer_tg_bot:latest
     restart: always
