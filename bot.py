@@ -13,7 +13,11 @@ import bot_message
 dbutil.checkandupdatedb()
 bot= Bot(token=os.getenv("TOKEN_Transfer_tg_bot"))
 dp = Dispatcher(bot)
+botname=''
 
+async def myname(bot):
+    MyUser = await bot.get_me(bot)
+    return MyUser['username']
 
 def get_command():
     con = sqlite3.connect("./db/bot.db")
@@ -51,7 +55,7 @@ async def command_start(message : types.Message):
         await bot.send_message(message.from_id, res[0])
         await message.delete()
     except:
-        await message.reply("Для общения с ботом напиши ему в ЛС @AlexTransfer_Bot")
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
 
 
@@ -62,7 +66,7 @@ async def command_service(message : types.Message):
         await bot.send_message(message.from_id, service_comm(message.text.strip('/').split(),message.from_id))
         await message.delete()
     except:
-        await message.reply("Для общения с ботом напиши ему в ЛС @AlexTransfer_Bot")
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
     return
 
@@ -139,7 +143,7 @@ async def on_startup(_):
     await setup_bot_commands()
     await bot_message.send_msg(bot, "Бот снова с Вами :)")
     asyncio.create_task(scheduler())
-
+    botname = await myname()
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
