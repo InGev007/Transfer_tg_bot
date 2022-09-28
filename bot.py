@@ -143,7 +143,7 @@ async def on_startup(_):
     await setup_bot_commands()
     await bot_message.send_msg(bot, "Бот снова с Вами :)")
     asyncio.create_task(scheduler())
-    botname = await myname()
+    botname = await myname(bot)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
