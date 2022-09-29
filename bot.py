@@ -16,8 +16,8 @@ dp = Dispatcher(bot)
 botname=''
 
 async def myname(bot):
-    MyUser = await bot.get_me(bot)
-    return MyUser['username']
+    MyUser = await bot.get_me()
+    return MyUser.username
 
 def get_command():
     con = sqlite3.connect("./db/bot.db")
