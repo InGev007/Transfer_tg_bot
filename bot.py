@@ -13,11 +13,13 @@ import bot_message
 dbutil.checkandupdatedb()
 bot= Bot(token=os.getenv("TOKEN_Transfer_tg_bot"))
 dp = Dispatcher(bot)
-botname=''
+botname=""
 
 async def myname(bot):
-    MyUser = await bot.get_me()
-    return MyUser.username
+    MyUser =await bot.get_me()
+    botname=MyUser["username"]
+    return botname
+
 
 def get_command():
     con = sqlite3.connect("./db/bot.db")
@@ -46,7 +48,7 @@ def get_command_data(comm_name):
 
 @dp.message_handler(commands=['start','help','info'])
 async def command_start(message : types.Message):
-    try:
+    if message.from_user.id==message.chat.id:
         con = sqlite3.connect("./db/bot.db")
         cur = con.cursor()
         res = con.execute("SELECT text FROM faq WHERE name = 'info'")
@@ -54,7 +56,7 @@ async def command_start(message : types.Message):
         con.close()
         await bot.send_message(message.from_id, res[0])
         await message.delete()
-    except:
+    else:
         await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
 
@@ -62,10 +64,10 @@ async def command_start(message : types.Message):
 #Service command
 @dp.message_handler(commands=['add','delete','update','list','ls'])
 async def command_service(message : types.Message):
-    try:
+    if message.from_user.id==message.chat.id:
         await bot.send_message(message.from_id, service_comm(message.text.strip('/').split(),message.from_id))
         await message.delete()
-    except:
+    else:
         await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
     return
@@ -73,35 +75,52 @@ async def command_service(message : types.Message):
 
 @dp.message_handler(commands=['dumpdb'])
 async def command_service(message : types.Message):
-    await dbutil.dumpdb(bot,message.from_id)
+    if message.from_user.id==message.chat.id:
+        await dbutil.dumpdb(bot,message.from_id)
+    else:
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
+        await message.delete()
     return
 @dp.message_handler(commands=['msg'])
 async def command_msg(message : types.Message):
-    if message.from_user.is_bot != True:
-        msg = message.text.strip('/msg ')
-        await bot_message.send_msg(bot, msg, message.from_id, message)
-        return
+    if message.from_user.id==message.chat.id:
+        if message.from_user.is_bot != True:
+            msg = message.text.strip('/msg ')
+            await bot_message.send_msg(bot, msg, message.from_id, message)
+    else:
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
+        await message.delete()
+    return
 @dp.message_handler(commands=['message'])
 async def command_msg(message : types.Message):
-    if message.from_user.is_bot != True:
-        msg = message.text.strip('/message ')
-        await bot_message.send_msg(bot, msg, message.from_id, message)
-        return
+    if message.from_user.id==message.chat.id:
+        if message.from_user.is_bot != True:
+            msg = message.text.strip('/message ')
+            await bot_message.send_msg(bot, msg, message.from_id, message)
+    else:
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
+        await message.delete()
+    return
 
 
 @dp.message_handler(commands=get_command())
 async def command_client(message : types.Message):
-    comm_data,comm_name = get_command_data(message.text.strip('/'))
-    # print(comm_data)
-    # print(comm_name)
-    if comm_data==0:
-        #start dialog
-        await bot.send_message(message.from_id, dialog.start(comm_name, message.from_id))
-        await message.delete()
+    if message.from_user.id==message.chat.id:
+        if message.from_user.is_bot != True:
+            comm_data,comm_name = get_command_data(message.text.strip('/'))
+            if comm_data==0:
+                #start dialog
+                await bot.send_message(message.from_id, dialog.start(comm_name, message.from_id))
+                await message.delete()
+            else:
+                #start faq
+                await bot.send_message(message.from_id, dialog.faq(comm_name))
+                await message.delete()
     else:
-        #start faq
-        await bot.send_message(message.from_id, dialog.faq(comm_name))
+        await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
+    return
+
 
 @dp.message_handler()
 async def echo_send(message : types.Message):
@@ -140,10 +159,12 @@ async def scheduler():
         await asyncio.sleep(1)
 
 async def on_startup(_):
+    global botname
     await setup_bot_commands()
     await bot_message.send_msg(bot, "Бот снова с Вами :)")
     asyncio.create_task(scheduler())
     botname = await myname(bot)
+    print(botname)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
