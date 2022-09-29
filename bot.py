@@ -20,6 +20,7 @@ async def myname(bot):
     botname=MyUser["username"]
     return botname
 
+
 def get_command():
     con = sqlite3.connect("./db/bot.db")
     cur = con.cursor()
