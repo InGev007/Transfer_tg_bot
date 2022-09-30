@@ -23,7 +23,7 @@ async def send_msg(bot, msg, idu=None, message=None):
                     await bot.send_message(idu, "Сообщение отправлено.")
                     await message.delete()
     else:
-        res = cur.execute('SELECT id FROM users')
+        res = cur.execute('SELECT id FROM users WHERE chatbot=1')
         res = res.fetchall()
         if len(res)!=0:
             for user in res:
