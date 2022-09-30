@@ -69,7 +69,7 @@ async def command_start(message : types.Message):
     if message.from_user.id==message.chat.id:
         con = sqlite3.connect("./db/bot.db")
         cur = con.cursor()
-        res = con.execute("SELECT text FROM faq WHERE name = 'info'")
+        res = cur.execute("SELECT text FROM faq WHERE name = 'info'")
         res = res.fetchone()
         await bot.send_message(message.from_id, res[0])
         await message.delete()
@@ -152,9 +152,6 @@ async def command_client(message : types.Message):
 @dp.message_handler()
 async def echo_send(message : types.Message):
     checkuser(message)
-    #await massage.answer(message.text)
-    #await massage.answer(message.from_id)
-    #await message.reply(message.from_id)
     dial, textdiag= dialog.dialog(message.text, message.from_id)
     if dial==2:
         await message.answer(textdiag)
@@ -162,7 +159,17 @@ async def echo_send(message : types.Message):
         #отравить финальное сообщение или меню
         await message.answer(textdiag)
         #Получить id админов
+        con = sqlite3.connect("./db/bot.db")
+        cur = con.cursor()
+        res = cur.execute("SELECT id FROM users WHERE priv=1")
+        admins = res.fetchall()
+        #Получить ответы пользователя
+        res = cur.execute("SELECT answer FROM dialoga WHERE idu=%s"%message.from_id)
+        answer = res.fechone()
+        con.close()
         #отправить админам сообщение
+        for admin in admins:
+            await bot.send_message(admin, answer)
     elif dial==0:
         result = nlp.nlptest(message.text.lower())
         if result != '':
