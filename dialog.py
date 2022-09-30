@@ -26,6 +26,13 @@ def dialog(text,id):
     con.commit()
     res = con.execute("SELECT next FROM dialogt WHERE id = '%s'" % dial)
     res = res.fetchone()
+    if res==None:
+        res = con.execute("DELETE FROM dialoga WHERE `idu`=%s"% id)
+        con.commit()
+        res = con.execute("DELETE FROM dialog WHERE `idu`=%s"% id)
+        con.commit()
+        con.close()
+        return
     dialn=res[0]
     res = con.execute("INSERT INTO dialog (`idu`,`dialog`) VALUES ('%s','%s');" % (id,dialn))
     con.commit()
@@ -49,7 +56,7 @@ def dialog(text,id):
             if log == 1: print(answ)
             i+=1
         #Удалить старые ответы если они есть
-        res = con.execute("DELETE FROM dialogа WHERE `idu`=%s"% id)
+        res = con.execute("DELETE FROM dialoga WHERE `idu`=%s"% id)
         con.commit()
         #Сделать запись в БД
         res = con.execute("INSERT INTO dialoga (`idu`,`answer`) VALUES (%s,'%s');" % (id,answ))

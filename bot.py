@@ -47,7 +47,7 @@ def get_command_data(comm_name):
 #print(get_command_data('заказ'))
 
 
-def checkuser(msg):
+def checkuser(message):
     if message.from_user.id!=message.chat.id:
         con = sqlite3.connect("./db/bot.db")
         cur = con.cursor()
@@ -81,6 +81,10 @@ async def command_start(message : types.Message):
             con.execute('UPDATE users SET first_name="%s",last_name="%s",username="%s",language_code="%s",chatbot=1 WHERE id=%s;'% (user[1],user[2],user[3],user[4],user[0]))
         else:
             con.execute('INSERT INTO users (id,first_name,last_name,username,language_code,chatbot,priv) VALUES (%s,"%s","%s","%s","%s",%s,%s);'% (user[0],user[1],user[2],user[3],user[4],1,0))
+        con.commit()
+        res = con.execute("DELETE FROM dialoga WHERE `idu`=%s"% message.from_user.id)
+        con.commit()
+        res = con.execute("DELETE FROM dialog WHERE `idu`=%s"% message.from_user.id)
         con.commit()
         con.close()
     else:

@@ -1,8 +1,5 @@
 FROM python:3
 
-RUN adduser nonroot
-USER nonroot
-
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./

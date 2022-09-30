@@ -6,6 +6,6 @@ services:
     image: transfer_tg_bot:latest
     restart: always
     volumes:
-      - ./db/:/usr/src/app/db/
+      - "./db/:/usr/src/app/db/:rw"
     environment:
       - TOKEN_Transfer_tg_bot
