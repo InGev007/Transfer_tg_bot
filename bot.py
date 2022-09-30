@@ -53,9 +53,18 @@ async def command_start(message : types.Message):
         cur = con.cursor()
         res = con.execute("SELECT text FROM faq WHERE name = 'info'")
         res = res.fetchone()
-        con.close()
         await bot.send_message(message.from_id, res[0])
         await message.delete()
+        res = con.execute("SELECT id FROM users WHERE id = %s"%message.from_user.id)
+        res=res.fetchall()
+        coll=len(res)
+        user=[message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.username, message.from_user.language_code]
+        if coll!=0:
+            con.execute('UPDATE users SET first_name="%s",last_name="%s",username="%s",language_code="%s",chatbot=1 WHERE id=%s;'% (user[1],user[2],user[3],user[4],user[0]))
+        else:
+            con.execute('INSERT INTO users (id,first_name,last_name,username,language_code,chatbot,priv) VALUES (%s,"%s","%s","%s","%s",%s,%s);'% (user[0],user[1],user[2],user[3],user[4],1,0))
+        con.commit()
+        con.close()
     else:
         await message.reply("Для общения с ботом напиши ему в ЛС @%s"%botname)
         await message.delete()
