@@ -48,6 +48,9 @@ def dialog(text,id):
             answ+=str(res[i][0])+' '
             if log == 1: print(answ)
             i+=1
+        #Удалить старые ответы если они есть
+        res = con.execute("DELETE FROM dialogа WHERE `idu`=%s"% id)
+        con.commit()
         #Сделать запись в БД
         res = con.execute("INSERT INTO dialoga (`idu`,`answer`) VALUES (%s,'%s');" % (id,answ))
         con.commit()
