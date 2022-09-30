@@ -46,6 +46,24 @@ def get_command_data(comm_name):
         return 0,res[0]
 #print(get_command_data('заказ'))
 
+
+def checkuser(msg):
+    if message.from_user.id!=message.chat.id:
+        con = sqlite3.connect("./db/bot.db")
+        cur = con.cursor()
+        res = con.execute("SELECT id FROM users WHERE id = %s"%message.from_user.id)
+        res=res.fetchall()
+        coll=len(res)
+        user=[message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.username, message.from_user.language_code]
+        if coll!=0:
+            con.execute('UPDATE users SET first_name="%s",last_name="%s",username="%s",language_code="%s",chatbot=0 WHERE id=%s;'% (user[1],user[2],user[3],user[4],user[0]))
+        else:
+            con.execute('INSERT INTO users (id,first_name,last_name,username,language_code,chatbot,priv) VALUES (%s,"%s","%s","%s","%s",%s,%s);'% (user[0],user[1],user[2],user[3],user[4],0,0))
+        con.commit()
+        con.close()
+    return
+
+
 @dp.message_handler(commands=['start','help','info'])
 async def command_start(message : types.Message):
     if message.from_user.id==message.chat.id:
@@ -133,6 +151,7 @@ async def command_client(message : types.Message):
 
 @dp.message_handler()
 async def echo_send(message : types.Message):
+    checkuser(message)
     #await massage.answer(message.text)
     #await massage.answer(message.from_id)
     #await message.reply(message.from_id)
