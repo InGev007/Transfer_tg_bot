@@ -2,7 +2,7 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 import os
-
+import uuid
 import asyncio
 import aioschedule
 
@@ -10,10 +10,12 @@ import nlp,dialog
 import dbutil, sqlite3
 import bot_message
 
+
 dbutil.checkandupdatedb()
 bot= Bot(token=os.getenv("TOKEN_Transfer_tg_bot"))
 dp = Dispatcher(bot)
 botname=""
+adminuuid=str(uuid.uuid4())
 
 async def myname(bot):
     MyUser =await bot.get_me()
@@ -63,6 +65,43 @@ def checkuser(message):
         con.close()
     return
 
+@dp.message_handler(commands=['admin-add'])
+async def command_admin_add(message : types.Message):
+    global adminuuid
+    if message.from_user.id==message.chat.id:
+        text = message.text.strip('/').split()
+        if text[1]==adminuuid:
+            con = sqlite3.connect("./db/bot.db")
+            cur = con.cursor()
+            cur.execute('UPDATE users SET priv=1 WHERE id=%s;'% message.from_user.id)
+            con.commit()
+            con.close()
+            await message.reply("Вы добавлены в администраторы!")
+            await message.delete()
+            adminuuid=str(uuid.uuid4())
+            print("Добавлен новый администратор: @" + message.from_user.username)
+            print("Для добавления ещё одного админа пришли ему /admin-add " + adminuuid)
+        else:
+            await message.reply("Неверная комманда!")
+            await message.delete()
+
+@dp.message_handler(commands=['admin-pass'])
+async def command_admin_pass(message : types.Message):
+    global adminuuid
+    if message.from_user.id==message.chat.id:
+        con = sqlite3.connect("./db/bot.db")
+        cur = con.cursor()
+        res = cur.execute('SELECT id FROM users WHERE id=%s AND priv=1'% message.from_user.id)
+        res = res.fetchall()
+        if len(res)==0:
+            con.close()
+            await bot.send_message(message.from_user.id, "У Вас нет досупа.")
+            await message.delete()
+            return
+        con.close()
+        await bot.send_message(message.from_user.id, "Для добавления ещё одного админа пришли ему /admin-add " + adminuuid)
+        await message.delete()
+        return
 
 @dp.message_handler(commands=['start','help','info'])
 async def command_start(message : types.Message):
@@ -169,11 +208,15 @@ async def echo_send(message : types.Message):
         admins = res.fetchall()
         #Получить ответы пользователя
         res = cur.execute("SELECT answer FROM dialoga WHERE idu=%s"%message.from_id)
-        answer = res.fechone()
+        answer = res.fetchone()
         con.close()
         #отправить админам сообщение
         for admin in admins:
-            await bot.send_message(admin, answer)
+            try:
+                await bot.send_message(admin[0], "Новый заказ: " + answer[0])
+            except:
+                print(admin)
+                print(answer)
     elif dial==0:
         result = nlp.nlptest(message.text.lower())
         if result != '':
@@ -203,7 +246,7 @@ async def on_startup(_):
     await bot_message.send_msg(bot, "Бот снова с Вами :)")
     asyncio.create_task(scheduler())
     botname = await myname(bot)
-    print(botname)
-
+    print("Имя бота: @" + botname)
+    print("Для добавления админа пришли ему /admin-add " + adminuuid)
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
